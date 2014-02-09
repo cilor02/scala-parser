@@ -9,13 +9,18 @@ trait BooleanNode {
     BooleanNode.map.+(s->this)
  }
  
+
+ 
 }
 object BooleanNode 
 {
   var map = Map[String,BooleanNode]()
   val prefix = "com.milo.BooleanPhrase"
   var nameCount = 0
-  
+   def getNode(name:String):BooleanNode =
+ {
+   map.get(name).get
+ }
   
 
 }

@@ -5,7 +5,10 @@ class BooleanParser (phrase:String)
 
   var boolOps = List("and","or")
   
-  
+  def parse (s:String):String =
+  {
+    
+  }
   
   def separateBrackets():Unit =
   {
