@@ -98,4 +98,40 @@ class BooleanTreeBuilder
     }
   
   
+    
+def spaceOutBooleanOperators (s:String):String =
+{
+      
+       // val s:String = new String("ftc and(hxjc)or kck or(gvk)and(vvhl)and ablbl org) andblglg or andlglbglb ")
+ // println(tokens)
+ def replaceOp (op:String):String =
+ {
+    op.replaceAllLiterally(")", ") ").replaceAllLiterally("(", " (")   
+ }
+  val leftSide  = List( ' ', ')')
+  val rightSide = List( ' ', '(')
+  val ops = List("or","and")
+  var nwStr = s
+  for( 
+      l <- leftSide;
+      r <- rightSide;
+      op <- ops
+  )
+  {
+    val inSituOp = ((new String()+l)+op)+r
+        
+    nwStr = nwStr.replaceAllLiterally(inSituOp, replaceOp(inSituOp))
+    //println(nwStr)
+  }
+  
+ //var nwStr = s.replaceAllLiterally(op, replaceOp(op))()
+ 
+ 
+      nwStr
+    }
+    
+    
+    
+    
+    
 }
