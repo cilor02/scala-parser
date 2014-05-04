@@ -1,5 +1,8 @@
 package com.milo.scala.parser
 
+
+import scala.collection.mutable.Map
+
 class BooleanTreeBuilder 
 {
   
@@ -17,7 +20,7 @@ class BooleanTreeBuilder
   
   def parse (s:String):String =
   {
-    var workString = s
+    var workString = spaceOutBooleanOperators(s)
     for (op <- boolOps)
     {
      var startingFrom = 0
@@ -34,7 +37,7 @@ class BooleanTreeBuilder
         val name = nextName
         val subPhrase = workString.substring(bracket1 + 1, bracket2)
         println(name + " : " +subPhrase)
-        map.+(name -> parse(subPhrase))
+        map.+=(name -> parse(subPhrase))
         workString = workString.take(bracket1 ) + name + workString.drop(bracket2 + 1)        
       }
       startingFrom = workString.indexOf( op, opIndex + op.length());     
