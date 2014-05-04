@@ -17,5 +17,5 @@ class BinaryBooleanNode (op:String,leftNode:String,rightNode:String) extends Boo
   
   override def value = operation(left.value,right.value)
   
-  
+  override def toString = leftNode + ":" + op + ":" +  rightNode
 }

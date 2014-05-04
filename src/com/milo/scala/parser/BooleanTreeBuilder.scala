@@ -2,13 +2,16 @@ package com.milo.scala.parser
 
 
 import scala.collection.mutable.Map
+import com.milo.scala.node.bool.BinaryBooleanNode
+import com.milo.scala.node.bool.BooleanNode
 
 class BooleanTreeBuilder 
 {
   
-  val map:Map[String, String] = Map[String, String ]()
-    
-  var boolOps = List("and","or")
+  val map:Map[String, List[String]] = Map[String, List[String]]()
+  val nodeMap:Map[String, BooleanNode] = Map[String, BooleanNode]()
+  
+  var boolOps = List("or","and")
   val prefix = "com.milo.BooleanPhrase"
   var nameCount = 0
   
@@ -18,7 +21,7 @@ class BooleanTreeBuilder
     prefix.+(nameCount)
   }
   
-  def parse (s:String):String =
+  def parse (s:String):List[String] =
   {
     var workString = spaceOutBooleanOperators(s)
     for (op <- boolOps)
@@ -36,7 +39,8 @@ class BooleanTreeBuilder
       {        
         val name = nextName
         val subPhrase = workString.substring(bracket1 + 1, bracket2)
-        println(name + " : " +subPhrase)
+        
+        println(name + " : " +tokenise(subPhrase,boolOps))
         map.+=(name -> parse(subPhrase))
         workString = workString.take(bracket1 ) + name + workString.drop(bracket2 + 1)        
       }
@@ -45,7 +49,7 @@ class BooleanTreeBuilder
     }
    }
     println("no bracket phrase : "+ workString)
-    workString
+    tokenise(workString,boolOps)
   }
   
 
@@ -134,7 +138,46 @@ def spaceOutBooleanOperators (s:String):String =
     }
     
     
+    def tokenise(s:String, ops:List[String]):List[String]
+    =
+    {
+      if (ops.isEmpty)
+        return List(s)
+     val posOp = s.indexOf(ops.head)
+     if(posOp > -1 && s(posOp -1) == ' ' && s(posOp + ops.head.length()) == ' ')
+     {
+       return tokenise(s.take(posOp),ops.tail):::List(ops.head):::tokenise(s.drop(posOp + ops.head.length()),ops)
+     }
+     tokenise(s,ops.tail)
+    }
     
-    
+    def buildNodes(tokens:List[String], ops:List[String]) 
+    {
+      if(!ops.isEmpty)
+      {
+      val idx = tokens.indexWhere(_== ops.head)
+
+      
+      if(idx > -1)
+      {
+        val leftBoolToken  = tokens(idx - 1)
+        val rightBoolToken = tokens(idx + 1)
+ 
+        val newNode = new BinaryBooleanNode (tokens(idx),tokens(idx - 1), tokens(idx + 1))
+        
+        // check whether token in node map; if not then assume to be evaluated
+        val newNodeName = this.nextName
+        this.nodeMap+=(newNodeName -> newNode)
+
+        val splitList = tokens.splitAt(idx -1)
+        
+        val newTokenList:List[String] = splitList._1:::newNodeName::(splitList._2 splitAt 3)._2
+        
+        buildNodes(newTokenList,ops.tail)
+
+      
+      }
+      }
+    }
     
 }
