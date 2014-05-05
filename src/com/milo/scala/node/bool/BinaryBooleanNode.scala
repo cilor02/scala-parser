@@ -4,8 +4,8 @@ class BinaryBooleanNode (op:String,leftNode:String,rightNode:String) extends Boo
 {
 
   
-  val left:BooleanNode
-  val right:BooleanNode
+  val left:BooleanNode = null
+  val right:BooleanNode = null
   
   
   val operation = op match 
@@ -17,5 +17,5 @@ class BinaryBooleanNode (op:String,leftNode:String,rightNode:String) extends Boo
   
   override def value = operation(left.value,right.value)
   
-  
+  override def toString = leftNode + ":" + op + ":" +  rightNode
 }

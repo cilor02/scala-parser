@@ -3,6 +3,7 @@ package com.milo.scala.parser
 import com.milo.scala.parser.node.Node
 import com.milo.scala.parser.node.BinaryNode
 import scala.collection.mutable.Map
+import com.milo.scala.parser.node.LeafNumericNode
 
 
 
@@ -12,8 +13,19 @@ class ExpressionTreeBuilder (tokens:List[String])
   val operators = List ("**","/","*","+","-")
   var newList:List[String] = tokens
   //var nodeTable:Map[String,BinaryNode]  = Map()
-  def process :Unit = operators.foreach(processOp(_)) 
-  
+  def process :Unit =
+  {
+    if(tokens.size == 1)
+    {
+      val n = new LeafNumericNode( Integer.parseInt(tokens.head))
+      val name = ExpressionTreeBuilder.newName
+      n.store(name)
+      newList = List(name)
+    }else
+    {
+      operators.foreach(processOp(_))
+    }
+  }
   
    def processOp (op:String) :Unit = 
    {

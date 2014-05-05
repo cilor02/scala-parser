@@ -1,11 +1,18 @@
 package com.milo.scala.parser
 
+
+import scala.collection.mutable.Map
+import com.milo.scala.node.bool.BinaryBooleanNode
+import com.milo.scala.node.bool.BooleanNode
+
 class BooleanTreeBuilder 
 {
   
-  val map:Map[String, String] = Map[String, String ]()
-    
-  var boolOps = List("and","or")
+  val map:Map[String, List[String]] = Map[String, List[String]]()
+  val nodeMap:Map[String, BooleanNode] = Map[String, BooleanNode]()
+  
+  var boolOps = List("or","and")
+  val arithOps = List("<=",">=","=",">","<", "factorOf", "multipleOf")
   val prefix = "com.milo.BooleanPhrase"
   var nameCount = 0
   
@@ -15,44 +22,47 @@ class BooleanTreeBuilder
     prefix.+(nameCount)
   }
   
-  def parse (s:String):String =
+  def parse (s:String):List[String] =
   {
-    var workString = s
-
+    var workString = spaceOutBooleanOperators(s)
     for (op <- boolOps)
     {
-     while (workString.indexOf( op) > -1)
+     var startingFrom = 0
+     while (startingFrom > -1)
      {
-      val bracketrange = findEnclosingBrackets(workString,op)
+     {
+      var opIndex = workString.indexOf( op, startingFrom)
+      val bracketrange = findEnclosingBrackets(workString,op,startingFrom)
       val bracket1 = bracketrange._1
       val bracket2 = bracketrange._2
       
       if(bracketrange._1 > -1  && bracketrange._2 > -1)
-      {
-        val leftPhrase = workString.substring(bracket1 + 1, workString.indexOf(op))
-        val rightPhrase = workString.substring(workString.indexOf(op) + op.length(),bracket2 - 1)
+      {        
         val name = nextName
-        map.+(name -> parse(workString.substring(bracket1, bracket2)))
-        workString = workString.take(bracket1 + 1) + name + workString.drop(bracket2 + 1)
+        val subPhrase = workString.substring(bracket1 + 1, bracket2)
         
+        println(name + " : " +tokenise(subPhrase,boolOps))
+        map.+=(name -> parse(subPhrase))
+        workString = workString.take(bracket1 ) + name + workString.drop(bracket2 + 1)        
       }
-      
+      startingFrom = workString.indexOf( op, opIndex + op.length());     
+    }
     }
    }
-    println(workString)
-    workString
+    println("no bracket phrase : "+ workString)
+    tokenise(workString,boolOps)
   }
   
 
   
-  def findEnclosingBrackets(s:String,op:String):Tuple2[Int,Int] =
+  def findEnclosingBrackets(s:String,op:String,from:Int):Tuple2[Int,Int] =
   {
-    (findOddLeftBracket(s, op),findOddRightBracket(s, op))
+    (findOddLeftBracket(s, op,from),findOddRightBracket(s, op,from))
   }
   
-  def findOddRightBracket(s:String,op:String):Int =
+  def findOddRightBracket(s:String,op:String,from:Int):Int =
     {
-      var posOp = s.indexOf(op)
+      var posOp = s.indexOf(op,from)
       var oddRightBracketCount = 0
       
       while(oddRightBracketCount<1 && posOp < s.length() - 1)
@@ -72,9 +82,9 @@ class BooleanTreeBuilder
       
     }
   
-    def findOddLeftBracket(s:String,op:String):Int =
+    def findOddLeftBracket(s:String,op:String,from:Int):Int =
     {
-      var posOp = s.indexOf(op)
+      var posOp = s.indexOf(op,from)
       var oddLeftBracketCount = 0
       
       while(oddLeftBracketCount<1 && posOp >0)   
@@ -96,4 +106,105 @@ class BooleanTreeBuilder
     }
   
   
+    
+def spaceOutBooleanOperators (s:String):String =
+{
+      
+       // val s:String = new String("ftc and(hxjc)or kck or(gvk)and(vvhl)and ablbl org) andblglg or andlglbglb ")
+ // println(tokens)
+ def replaceOp (op:String):String =
+ {
+    op.replaceAllLiterally(")", ") ").replaceAllLiterally("(", " (")   
+ }
+  val leftSide  = List( ' ', ')')
+  val rightSide = List( ' ', '(')
+  val ops = List("or","and")
+  var nwStr = s
+  for( 
+      l <- leftSide;
+      r <- rightSide;
+      op <- ops
+  )
+  {
+    val inSituOp = ((new String()+l)+op)+r
+        
+    nwStr = nwStr.replaceAllLiterally(inSituOp, replaceOp(inSituOp))
+    //println(nwStr)
+  }
+  
+ //var nwStr = s.replaceAllLiterally(op, replaceOp(op))()
+ 
+ 
+      nwStr
+    }
+    
+    
+    def tokenise(s:String, ops:List[String]):List[String]
+    =
+    {
+      if (ops.isEmpty)
+        return List(s)
+     val posOp = s.indexOf(ops.head)
+     if(posOp > -1 && s(posOp -1) == ' ' && s(posOp + ops.head.length()) == ' ')
+     {
+       return tokenise(s.take(posOp),ops.tail):::List(ops.head):::tokenise(s.drop(posOp + ops.head.length()),ops)
+     }
+     tokenise(s,ops.tail)
+    }
+    
+    def processBooleanStatement (s:String, ops:List[String]):List[String] =
+    {
+      if (ops.isEmpty)
+      {
+        return Nil
+      }
+      val leftExpAndRightExp = s.split(ops.head)
+      if(leftExpAndRightExp.length < 2)
+        processBooleanStatement(s, ops.tail)
+      else
+        leftExpAndRightExp.toList ::: List( ops.head)
+     }
+    
+    def buildNodes(tokens:List[String], ops:List[String]) 
+    {
+      if(!ops.isEmpty)
+      {
+      val idx = tokens.indexWhere(_== ops.head)
+
+      
+      if(idx > -1)
+      {
+        val leftBoolToken  = tokens(idx - 1)
+        val rightBoolToken = tokens(idx + 1)
+ 
+        val newNode = new BinaryBooleanNode (tokens(idx),tokens(idx - 1), tokens(idx + 1))
+        
+        val leftArithmeticExp  = processBooleanStatement(leftBoolToken, arithOps)
+        val rightArithmeticExp = processBooleanStatement(rightBoolToken, arithOps)
+        println(leftArithmeticExp)
+        println(rightArithmeticExp)
+        val tk1 = new Tokeniser(leftArithmeticExp.head)
+        val tk2 = new Tokeniser(leftArithmeticExp.tail.head)
+        tk1.startTokenising
+        println(tk1.tokens)
+        tk2.startTokenising
+        println(tk2.tokens)
+        
+        
+        
+        // check whether token in node map; if not then assume to be evaluated
+        val newNodeName = this.nextName
+        this.nodeMap+=(newNodeName -> newNode)
+
+        val splitList = tokens.splitAt(idx -1)
+        
+        val newTokenList:List[String] = splitList._1:::newNodeName::(splitList._2 splitAt 3)._2
+        
+        buildNodes(newTokenList,ops.tail)
+
+      
+      }
+      }
+    }
+    
 }
