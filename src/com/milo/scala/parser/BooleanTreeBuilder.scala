@@ -12,6 +12,7 @@ class BooleanTreeBuilder
   val nodeMap:Map[String, BooleanNode] = Map[String, BooleanNode]()
   
   var boolOps = List("or","and")
+  val arithOps = List("<=",">=","=",">","<", "factorOf", "multipleOf")
   val prefix = "com.milo.BooleanPhrase"
   var nameCount = 0
   
@@ -151,6 +152,19 @@ def spaceOutBooleanOperators (s:String):String =
      tokenise(s,ops.tail)
     }
     
+    def processBooleanStatement (s:String, ops:List[String]):List[String] =
+    {
+      if (ops.isEmpty)
+      {
+        return Nil
+      }
+      val leftExpAndRightExp = s.split(ops.head)
+      if(leftExpAndRightExp.length < 2)
+        processBooleanStatement(s, ops.tail)
+      else
+        leftExpAndRightExp.toList ::: List( ops.head)
+     }
+    
     def buildNodes(tokens:List[String], ops:List[String]) 
     {
       if(!ops.isEmpty)
@@ -164,6 +178,19 @@ def spaceOutBooleanOperators (s:String):String =
         val rightBoolToken = tokens(idx + 1)
  
         val newNode = new BinaryBooleanNode (tokens(idx),tokens(idx - 1), tokens(idx + 1))
+        
+        val leftArithmeticExp  = processBooleanStatement(leftBoolToken, arithOps)
+        val rightArithmeticExp = processBooleanStatement(rightBoolToken, arithOps)
+        println(leftArithmeticExp)
+        println(rightArithmeticExp)
+        val tk1 = new Tokeniser(leftArithmeticExp.head)
+        val tk2 = new Tokeniser(leftArithmeticExp.tail.head)
+        tk1.startTokenising
+        println(tk1.tokens)
+        tk2.startTokenising
+        println(tk2.tokens)
+        
+        
         
         // check whether token in node map; if not then assume to be evaluated
         val newNodeName = this.nextName
